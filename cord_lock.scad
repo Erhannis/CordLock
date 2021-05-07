@@ -3,6 +3,8 @@ A cord lock, like on your blinds, the thing where
 you pull it to raise the blinds, and depending on the
 angle you let go it either lets the blinds down,
 or catches.
+
+Save each of the three pieces to their own STL; I don't think they're quite z-aligned, and I had a print fail because I didn't notice.
 */
 
 use <deps.link/BOSL/nema_steppers.scad>
@@ -29,7 +31,7 @@ COVER_T = 1.5;
 
 //ty(-20) circle(d=24.26);
 
-rotate([0,0,-RACK_A]) translate([BLOCK_H-11,13-40,-COVER_T])
+!rotate([0,0,-RACK_A]) translate([BLOCK_H-11,13-40,-COVER_T])
     stirnrad(modul=1, zahnzahl=13, breite=BLOCK_T-0.2, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
 GEAR_DIMS = pfeilrad_dims(modul=1, zahnzahl=13, breite=BLOCK_T, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
 
@@ -61,35 +63,37 @@ module body() {
     }
 }
 
-autolid(lid=false,top_z=BLOCK_T,thick=COVER_T) {
-    body();
-}
-
 translate([-10,0,BLOCK_T+4.5-COVER_T]) rotate([0,180,0]) autolid(lid=true,top_z=BLOCK_T,thick=COVER_T) {
     body();
 }
 
-// Nail tabs
-rotate([0,0,90-RACK_A]) translate([0,-11*1.5/2,-COVER_T]) nailTab(t=COVER_T);
-rotate([0,0,90-RACK_A]) translate([0,-BLOCK_H-(-11*1.5/2),-COVER_T]) nailTab(t=COVER_T);
-translate([11*1.5/2+WALL_T/2,LW+WALL_T/2,-COVER_T]) rotate([0,0,-90]) nailTab(t=COVER_T);
-translate([BLOCK_H-11*1.5/2,LW+WALL_T/2,-COVER_T]) rotate([0,0,-90]) nailTab(t=COVER_T);
+union() {
+    autolid(lid=false,top_z=BLOCK_T,thick=COVER_T) {
+        body();
+    }
 
-translate([0,0,BLOCK_T/2]) cmirror([0,0,0]) translate([0,0,-BLOCK_T/2])
-{
-    difference() {
-        translate([0,0,-COVER_T]) scale([1,1,1000]) hull() union() {
-            body();
+    // Nail tabs
+    rotate([0,0,90-RACK_A]) translate([0,-11*1.5/2,-COVER_T]) nailTab(t=COVER_T);
+    rotate([0,0,90-RACK_A]) translate([0,-BLOCK_H-(-11*1.5/2),-COVER_T]) nailTab(t=COVER_T);
+    translate([11*1.5/2+WALL_T/2,LW+WALL_T/2,-COVER_T]) rotate([0,0,-90]) nailTab(t=COVER_T);
+    translate([BLOCK_H-11*1.5/2,LW+WALL_T/2,-COVER_T]) rotate([0,0,-90]) nailTab(t=COVER_T);
+
+    translate([0,0,BLOCK_T/2]) cmirror([0,0,0]) translate([0,0,-BLOCK_T/2])
+    {
+        difference() {
+            translate([0,0,-COVER_T]) scale([1,1,1000]) hull() union() {
+                body();
+                linear_extrude(height=SHELF_T) {
+                    shelf();
+                }
+            }
+            scale([1,1,20]) OZp();
+        }
+        difference() {
             linear_extrude(height=SHELF_T) {
                 shelf();
             }
+            body();
         }
-        scale([1,1,20]) OZp();
-    }
-    difference() {
-        linear_extrude(height=SHELF_T) {
-            shelf();
-        }
-        body();
     }
 }
