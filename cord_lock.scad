@@ -4,7 +4,13 @@ you pull it to raise the blinds, and depending on the
 angle you let go it either lets the blinds down,
 or catches.
 
-Save each of the three pieces to their own STL; I don't think they're quite z-aligned, and I had a print fail because I didn't notice.
+Save each of the three pieces (gear, lid, body)
+to their own STL; I don't think they're quite
+z-aligned, and I had a print fail because
+I didn't notice.
+
+Careful!  Make sure the lip is present on the body (if not DUMMY mode).
+Flush caches and rerender if it's not present.
 */
 
 use <deps.link/BOSL/nema_steppers.scad>
@@ -17,11 +23,12 @@ use <deps.link/getriebe/Getriebe.scad>
 use <deps.link/gearbox/gearbox.scad>
 
 $FOREVER = 1000;
-$fn=60;
+DUMMY = false;
+$fn = DUMMY ? 10 : 60;
 
 WALL_T = 3;
 BLOCK_T = 5;
-BLOCK_H = 50;
+BLOCK_H = 60;
 RETURN_W = 10;
 RACK_A = 15;
 RACK_H = WALL_T*1.5;
@@ -31,13 +38,17 @@ COVER_T = 1.5;
 
 //ty(-20) circle(d=24.26);
 
-!rotate([0,0,-RACK_A]) translate([BLOCK_H-11,13-40,-COVER_T])
-    stirnrad(modul=1, zahnzahl=13, breite=BLOCK_T-0.2, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
-GEAR_DIMS = pfeilrad_dims(modul=1, zahnzahl=13, breite=BLOCK_T, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
+TEETH = 11;
 
-LW = (RETURN_W+WALL_T)*2+2;
+// Gear
+rotate([0,0,-RACK_A]) translate([BLOCK_H-11,13-40,-COVER_T])
+    stirnrad(modul=1, zahnzahl=TEETH, breite=BLOCK_T-0.2, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
+GEAR_DIMS = pfeilrad_dims(modul=1, zahnzahl=TEETH, breite=BLOCK_T, bohrung=0, eingriffswinkel=20, schraegungswinkel=0, optimiert=false);
+
+LW = RETURN_W*(0.8+1)+(WALL_T)*2+2;
 TOP_X = WALL_T/2;
 MID_Y = LW-RETURN_W-WALL_T;
+echo(LW,RETURN_W,WALL_T,MID_Y);
 GEAR_IX0 = (RACK_H+GEAR_DIMS[0]*1.1)/cos(RACK_A);
 GEAR_IX = -BLOCK_H*tan(RACK_A)+GEAR_IX0+WALL_T/2;
 
@@ -50,7 +61,12 @@ module shelf() {
 
 module body() {
     difference() {
-        rotate([0,0,-RACK_A]) zahnstange(modul=1, laenge=BLOCK_H/cos(RACK_A), hoehe=RACK_H, breite=BLOCK_T, eingriffswinkel=20, schraegungswinkel=0);
+        rotate([0,0,-RACK_A]) difference() {
+            zahnstange(modul=1, laenge=BLOCK_H/cos(RACK_A), hoehe=RACK_H, breite=BLOCK_T, eingriffswinkel=20, schraegungswinkel=0);
+            RACK_DIMS = zahnstange_dims(modul=1, laenge=BLOCK_H/cos(RACK_A), hoehe=RACK_H, breite=BLOCK_T, eingriffswinkel=20, schraegungswinkel=0);
+            // Hmm...I dunno, the dims seem wrong; had to hardcode a factor.
+            ty(RACK_DIMS[3]-RACK_DIMS[2]*2.5) rotate([45,0,0]) OZm();
+        }
         OXp([BLOCK_H,0,0]);
         linear_extrude(height=$FOREVER)shelf();
     }
@@ -63,13 +79,21 @@ module body() {
     }
 }
 
-translate([-10,0,BLOCK_T+4.5-COVER_T]) rotate([0,180,0]) autolid(lid=true,top_z=BLOCK_T,thick=COVER_T) {
-    body();
+// Lid
+if (!DUMMY) {
+    translate([-10,0,BLOCK_T+4.5-COVER_T]) rotate([0,180,0]) autolid(lid=true,top_z=BLOCK_T,thick=COVER_T) {
+        body();
+    }
 }
 
+// Body
 union() {
-    autolid(lid=false,top_z=BLOCK_T,thick=COVER_T) {
+    if (DUMMY) {
         body();
+    } else {
+        autolid(lid=false,top_z=BLOCK_T,thick=COVER_T) {
+            body();
+        }
     }
 
     // Nail tabs
