@@ -9,6 +9,9 @@ to their own STL; I don't think they're quite
 z-aligned, and I had a print fail because
 I didn't notice.
 
+I added a cutout under the rack, to accomodate
+elephant's foot on the gear.
+
 Careful!  Make sure the lip is present on the body (if not DUMMY mode).
 Flush caches and rerender if it's not present.
 */
